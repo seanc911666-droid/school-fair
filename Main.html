@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>園遊會線上預購</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+  <nav class="bg-indigo-600 text-white p-4 shadow-lg flex justify-between items-center">
+    <h1 class="text-xl font-bold">🎪 園遊會美食預購</h1>
+    <button onclick="toggleAdmin()" class="bg-indigo-800 px-3 py-1 rounded text-sm hover:bg-indigo-900">
+      管理員入口
+    </button>
+  </nav>
+
+  <div class="max-w-md mx-auto p-4">
+
+    <!-- 顧客端 (免登入) -->
+    <div id="customer-view" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-lg font-bold mb-2">1. 訂購人資訊</h2>
+        <div class="space-y-3">
+          <div>
+            <label class="text-sm font-medium">班級 (必填)</label>
+            <input type="text" id="cust-class" placeholder="例：高一 3 班" class="w-full border p-2 rounded mt-1">
+          </div>
+          <div>
+            <label class="text-sm font-medium">姓名與座號 (必填)</label>
+            <input type="text" id="cust-name" placeholder="例：王小明 15號" class="w-full border p-2 rounded mt-1">
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-lg font-bold mb-2">2. 選擇商品</h2>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-bold">招牌珍珠奶茶</p>
+              <p class="text-sm text-slate-500">$50</p>
+            </div>
+            <input type="number" id="item-boba" value="0" min="0" class="w-16 border text-center p-1 rounded">
+          </div>
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-bold">美式現炸薯條</p>
+              <p class="text-sm text-slate-500">$40</p>
+            </div>
+            <input type="number" id="item-fries" value="0" min="0" class="w-16 border text-center p-1 rounded">
+          </div>
+        </div>
+        <button id="submit-btn" onclick="submitOrder()" class="w-full mt-4 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-700">
+          送出預購單
+        </button>
+      </div>
+    </div>
+
+    <!-- 管理員端 -->
+    <div id="admin-view" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-lg font-bold mb-2">🔒 管理員後台</h2>
+        <div id="login-box" class="space-y-2">
+          <input type="password" id="admin-pass" placeholder="請輸入管理員密碼" class="w-full border p-2 rounded">
+          <button onclick="loginAdmin()" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">登入驗證</button>
+        </div>
+        
+        <div id="admin-content" class="hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold">所有預購訂單</h3>
+            <button onclick="loadOrders()" class="text-xs bg-slate-200 px-2 py-1 rounded">重新整理</button>
+          </div>
+          <div id="orders-list" class="space-y-2 text-sm"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ⚠️ 請替換成你部署 Google Apps Script 後取得的 Web 應用程式網址
+    const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+    async function submitOrder() {
+      const className = document.getElementById('cust-class').value.trim();
+      const name = document.getElementById('cust-name').value.trim();
+      const bobaQty = parseInt(document.getElementById('item-boba').value) || 0;
+      const friesQty = parseInt(document.getElementById('item-fries').value) || 0;
+
+      if (!className || !name) {
+        alert('請填寫班級與姓名！');
+        return;
+      }
+      if (bobaQty === 0 && friesQty === 0) {
+        alert('請至少選擇一種商品！');
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerText = '傳送訂單中...';
+
+      const payload = {
+        action: "addOrder",
+        className: className,
+        name: name,
+        boba: bobaQty,
+        fries: friesQty,
+        totalPrice: (bobaQty * 50) + (friesQty * 40)
+      };
+
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        alert('預購成功！資料已同步儲存至班級 Google 試算表。');
+        document.getElementById('cust-class').value = '';
+        document.getElementById('cust-name').value = '';
+        document.getElementById('item-boba').value = '0';
+        document.getElementById('item-fries').value = '0';
+      } catch (err) {
+        alert('送出失敗，請重試：' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '送出預購單';
+      }
+    }
+
+    function toggleAdmin() {
+      document.getElementById('customer-view').classList.toggle('hidden');
+      document.getElementById('admin-view').classList.toggle('hidden');
+    }
+
+    function loginAdmin() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === 'admin888') { // 設定你的後台密碼
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('admin-content').classList.remove('hidden');
+        loadOrders();
+      } else {
+        alert('密碼錯誤！');
+      }
+    }
+
+    async function loadOrders() {
+      const listDiv = document.getElementById('orders-list');
+      listDiv.innerHTML = '資料載入中...';
+
+      try {
+        const res = await fetch(GAS_URL);
+        const data = await res.json();
+        listDiv.innerHTML = '';
+        
+        if (data.length === 0) {
+          listDiv.innerHTML = '目前無預購訂單';
+          return;
+        }
+
+        data.forEach(item => {
+          listDiv.innerHTML += `
+            <div class="border p-2 rounded bg-slate-50">
+              <div class="font-bold text-indigo-600">${item.className} - ${item.name}</div>
+              <div>珍奶 x ${item.boba} | 薯條 x ${item.fries}</div>
+              <div class="text-xs text-slate-500 justify-between flex mt-1">
+                <span>總計: $${item.totalPrice}</span>
+                <span>${item.time}</span>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        listDiv.innerHTML = '載入失敗：' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
