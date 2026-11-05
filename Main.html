@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>園遊會線上預購</title>
+  <title>園遊會美食線上預購</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 text-slate-800">
 
   <nav class="bg-indigo-600 text-white p-4 shadow-lg flex justify-between items-center">
-    <h1 class="text-xl font-bold">🎪 園遊會美食預購</h1>
+    <h1 class="text-xl font-bold">🎪 園遊會美食預購系統</h1>
     <button onclick="toggleAdmin()" class="bg-indigo-800 px-3 py-1 rounded text-sm hover:bg-indigo-900">
       管理員入口
     </button>
   </nav>
 
-  <div class="max-w-md mx-auto p-4">
+  <div class="max-w-md mx-auto p-4 space-y-4">
 
     <!-- 顧客端 (免登入) -->
     <div id="customer-view" class="space-y-4">
       <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-lg font-bold mb-2">1. 訂購人資訊</h2>
+        <h2 class="text-lg font-bold mb-2">1. 預購人資訊</h2>
         <div class="space-y-3">
           <div>
             <label class="text-sm font-medium">班級 (必填)</label>
@@ -34,23 +34,60 @@
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-lg font-bold mb-2">2. 選擇商品</h2>
+        <h2 class="text-lg font-bold mb-3">2. 選擇商品</h2>
+        
         <div class="space-y-3">
+          <!-- 糖葫蘆 -->
           <div class="flex justify-between items-center border-b pb-2">
             <div>
-              <p class="font-bold">招牌珍珠奶茶</p>
-              <p class="text-sm text-slate-500">$50</p>
+              <p class="font-bold">🍓 糖葫蘆</p>
+              <p class="text-sm text-slate-500">$40 / 支</p>
             </div>
-            <input type="number" id="item-boba" value="0" min="0" class="w-16 border text-center p-1 rounded">
+            <input type="number" id="item-tanghulu" value="0" min="0" onchange="calculateTotal()" class="w-16 border text-center p-1 rounded">
           </div>
+
+          <!-- 香腸 -->
           <div class="flex justify-between items-center border-b pb-2">
             <div>
-              <p class="font-bold">美式現炸薯條</p>
-              <p class="text-sm text-slate-500">$40</p>
+              <p class="font-bold">🌭 香腸</p>
+              <p class="text-sm text-slate-500">$45 / 支</p>
             </div>
-            <input type="number" id="item-fries" value="0" min="0" class="w-16 border text-center p-1 rounded">
+            <input type="number" id="item-sausage" value="0" min="0" onchange="calculateTotal()" class="w-16 border text-center p-1 rounded">
+          </div>
+
+          <!-- 花生捲冰淇淋 -->
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-bold">🍦 花生捲冰淇淋</p>
+              <p class="text-sm text-slate-500">$50 / 份</p>
+            </div>
+            <input type="number" id="item-icecream" value="0" min="0" onchange="calculateTotal()" class="w-16 border text-center p-1 rounded">
+          </div>
+
+          <!-- 冰島包(大) -->
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-bold">👜 冰島包 (大)</p>
+              <p class="text-sm text-slate-500">$150 / 個</p>
+            </div>
+            <input type="number" id="item-bag-large" value="0" min="0" onchange="calculateTotal()" class="w-16 border text-center p-1 rounded">
+          </div>
+
+          <!-- 冰島包(小) -->
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-bold">👝 冰島包 (小)</p>
+              <p class="text-sm text-slate-500">$100 / 個</p>
+            </div>
+            <input type="number" id="item-bag-small" value="0" min="0" onchange="calculateTotal()" class="w-16 border text-center p-1 rounded">
           </div>
         </div>
+
+        <div class="mt-4 pt-2 border-t flex justify-between items-center font-bold text-lg">
+          <span>總金額：</span>
+          <span class="text-indigo-600">$<span id="total-display">0</span></span>
+        </div>
+
         <button id="submit-btn" onclick="submitOrder()" class="w-full mt-4 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow hover:bg-indigo-700">
           送出預購單
         </button>
@@ -80,19 +117,37 @@
 
   <script>
     // ⚠️ 請替換成你部署 Google Apps Script 後取得的 Web 應用程式網址
-    const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyNuz-DGFErWbG-eJWiq0_ze1Xun1sN2erfiNZf8XkimQ7zINQRpDP5V0taxE_K2eGL/exec";
+
+    function calculateTotal() {
+      const tanghulu = (parseInt(document.getElementById('item-tanghulu').value) || 0) * 40;
+      const sausage = (parseInt(document.getElementById('item-sausage').value) || 0) * 45;
+      const icecream = (parseInt(document.getElementById('item-icecream').value) || 0) * 50;
+      const bagLarge = (parseInt(document.getElementById('item-bag-large').value) || 0) * 150;
+      const bagSmall = (parseInt(document.getElementById('item-bag-small').value) || 0) * 100;
+      
+      const total = tanghulu + sausage + icecream + bagLarge + bagSmall;
+      document.getElementById('total-display').innerText = total;
+      return total;
+    }
 
     async function submitOrder() {
       const className = document.getElementById('cust-class').value.trim();
       const name = document.getElementById('cust-name').value.trim();
-      const bobaQty = parseInt(document.getElementById('item-boba').value) || 0;
-      const friesQty = parseInt(document.getElementById('item-fries').value) || 0;
+      
+      const tanghulu = parseInt(document.getElementById('item-tanghulu').value) || 0;
+      const sausage = parseInt(document.getElementById('item-sausage').value) || 0;
+      const icecream = parseInt(document.getElementById('item-icecream').value) || 0;
+      const bagLarge = parseInt(document.getElementById('item-bag-large').value) || 0;
+      const bagSmall = parseInt(document.getElementById('item-bag-small').value) || 0;
+      
+      const total = calculateTotal();
 
       if (!className || !name) {
         alert('請填寫班級與姓名！');
         return;
       }
-      if (bobaQty === 0 && friesQty === 0) {
+      if (total === 0) {
         alert('請至少選擇一種商品！');
         return;
       }
@@ -105,9 +160,12 @@
         action: "addOrder",
         className: className,
         name: name,
-        boba: bobaQty,
-        fries: friesQty,
-        totalPrice: (bobaQty * 50) + (friesQty * 40)
+        tanghulu: tanghulu,
+        sausage: sausage,
+        icecream: icecream,
+        bagLarge: bagLarge,
+        bagSmall: bagSmall,
+        totalPrice: total
       };
 
       try {
@@ -115,11 +173,15 @@
           method: "POST",
           body: JSON.stringify(payload)
         });
-        alert('預購成功！資料已同步儲存至班級 Google 試算表。');
+        alert('預購成功！資料已寫入試算表。');
         document.getElementById('cust-class').value = '';
         document.getElementById('cust-name').value = '';
-        document.getElementById('item-boba').value = '0';
-        document.getElementById('item-fries').value = '0';
+        document.getElementById('item-tanghulu').value = '0';
+        document.getElementById('item-sausage').value = '0';
+        document.getElementById('item-icecream').value = '0';
+        document.getElementById('item-bag-large').value = '0';
+        document.getElementById('item-bag-small').value = '0';
+        calculateTotal();
       } catch (err) {
         alert('送出失敗，請重試：' + err.message);
       } finally {
@@ -135,7 +197,7 @@
 
     function loginAdmin() {
       const pass = document.getElementById('admin-pass').value;
-      if (pass === 'admin888') { // 設定你的後台密碼
+      if (pass === 'admin888') { // 後台密碼
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('admin-content').classList.remove('hidden');
         loadOrders();
@@ -159,12 +221,19 @@
         }
 
         data.forEach(item => {
+          let itemsText = [];
+          if (item.tanghulu > 0) itemsText.push(`糖葫蘆 x${item.tanghulu}`);
+          if (item.sausage > 0) itemsText.push(`香腸 x${item.sausage}`);
+          if (item.icecream > 0) itemsText.push(`花生捲冰淇淋 x${item.icecream}`);
+          if (item.bagLarge > 0) itemsText.push(`冰島包(大) x${item.bagLarge}`);
+          if (item.bagSmall > 0) itemsText.push(`冰島包(小) x${item.bagSmall}`);
+
           listDiv.innerHTML += `
             <div class="border p-2 rounded bg-slate-50">
               <div class="font-bold text-indigo-600">${item.className} - ${item.name}</div>
-              <div>珍奶 x ${item.boba} | 薯條 x ${item.fries}</div>
+              <div class="text-slate-700">${itemsText.join(' | ')}</div>
               <div class="text-xs text-slate-500 justify-between flex mt-1">
-                <span>總計: $${item.totalPrice}</span>
+                <span class="font-bold text-emerald-600">總計: $${item.totalPrice}</span>
                 <span>${item.time}</span>
               </div>
             </div>
